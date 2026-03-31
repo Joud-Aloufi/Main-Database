@@ -5,20 +5,20 @@ USE DirayaAI_DB;
 
 -- 2. جدول المستخدمين الموحد (يخدم الطالبات والمشرفات بنفس الأعمدة)
 CREATE TABLE Users (
-    User_ID INT AUTO_INCREMENT PRIMARY KEY,          
-    id_number VARCHAR(20) UNIQUE NOT NULL,           -- الرقم الجامعي للطالبات / الوظيفي للمشرفات
+    User_ID INT AUTO_INCREMENT PRIMARY KEY,
+    id_number VARCHAR(20) UNIQUE NOT NULL,          -- الرقم الجامعي للطالبات / الوظيفي للمشرفات
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     Full_Name VARCHAR(150) GENERATED ALWAYS AS (CONCAT(first_name, ' ', last_name)) STORED,
-    email VARCHAR(100) UNIQUE NOT NULL,              
-    Password_Hash VARCHAR(255) NOT NULL,             
-    role ENUM('طالبة', 'مشرفة') NOT NULL,             
-    Phone_Number VARCHAR(15) NULL,                   
-    Is_Active BOOLEAN DEFAULT TRUE,                  
-    Login_Count INT DEFAULT 0,                       
-    Last_Login DATETIME DEFAULT NULL,                
+    email VARCHAR(100) UNIQUE NOT NULL,
+    Password_Hash VARCHAR(255) NOT NULL,
+    role ENUM('طالب', 'مشرف', 'مدير نظام') DEFAULT 'طالب',
+    Phone_Number VARCHAR(15) NULL,
+    Is_Active BOOLEAN DEFAULT TRUE,
+    Login_Count INT DEFAULT 0,
+    Last_Login DATETIME DEFAULT NULL,
     Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; 
 
 -- 3. جدول المواد
 CREATE TABLE Subjects (
@@ -27,7 +27,7 @@ CREATE TABLE Subjects (
     Subject_Name VARCHAR(100) NOT NULL,
     Description TEXT,
     Credit_Hours INT,
-    Department VARCHAR(100) DEFAULT 'Information Technology',
+    Department VARCHAR(100),
     Level INT,
     Is_Active BOOLEAN DEFAULT TRUE,
     Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -37,10 +37,9 @@ CREATE TABLE Subjects (
 CREATE TABLE FAQ_Knowledge_Base (
     FAQ_ID INT AUTO_INCREMENT PRIMARY KEY,
     Subject_ID INT NOT NULL,
-    Category VARCHAR(100),
+    Category VARCHAR(100) DEFAULT 'الشؤون الأكاديمية',
     Question_Text TEXT NOT NULL,
     Answer_Text TEXT NOT NULL,
-    Keywords TEXT,
     Is_Approved BOOLEAN DEFAULT FALSE,
     Approved_By INT NULL,
     Last_Updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -391,14 +390,12 @@ DROP TABLE IF EXISTS Notifications;
 -- 3. إنشاء الجدول بالمواصفات الصحيحة
 CREATE TABLE Notifications (
     Notification_ID INT AUTO_INCREMENT PRIMARY KEY,
-    User_ID INT NOT NULL,                             
-    Title VARCHAR(150) NOT NULL,                      
-    Message TEXT NOT NULL,                            
-    Is_Read BOOLEAN DEFAULT FALSE,                    
-    Notification_Type ENUM('System', 'Approval', 'Academic', 'Reminder') DEFAULT 'System',
-    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
-    
-    CONSTRAINT fk_notif_user_id FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE CASCADE
+    User_ID INT NOT NULL,
+    Title VARCHAR(255) NOT NULL,
+    Message TEXT NOT NULL,
+    Is_Read BOOLEAN DEFAULT FALSE,
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. إعادة تفعيل القيود بعد إنشاء الجدول
