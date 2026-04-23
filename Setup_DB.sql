@@ -4,9 +4,9 @@ CREATE DATABASE DirayaAI_DB;
 USE DirayaAI_DB;
 
 -- 2. جدول المستخدمين الموحد (يخدم الطالبات والمشرفات بنفس الأعمدة)
-CREATE TABLE Users (
+CREATE TABLE users (
     User_ID INT AUTO_INCREMENT PRIMARY KEY,          
-    id_number VARCHAR(20) UNIQUE NOT NULL,           -- الرقم الجامعي للطالبات / الوظيفي للمشرفات
+    id_number VARCHAR(20) UNIQUE NOT NULL,           
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     Full_Name VARCHAR(150) GENERATED ALWAYS AS (CONCAT(first_name, ' ', last_name)) STORED,
@@ -15,13 +15,15 @@ CREATE TABLE Users (
     role ENUM('طالبة', 'مشرفة') NOT NULL,             
     Phone_Number VARCHAR(15) NULL,                   
     Is_Active BOOLEAN DEFAULT TRUE,                  
+    Reset_Token VARCHAR(255) NULL, 
+    Token_Expiry DATETIME NULL,    
     Login_Count INT DEFAULT 0,                       
     Last_Login DATETIME DEFAULT NULL,                
     Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 3. جدول المواد
-CREATE TABLE Subjects (
+CREATE TABLE subjects (
     Subject_ID INT AUTO_INCREMENT PRIMARY KEY,
     Subject_Code VARCHAR(20) UNIQUE NOT NULL,
     Subject_Name VARCHAR(100) NOT NULL,
@@ -34,7 +36,7 @@ CREATE TABLE Subjects (
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. جدول الأسئلة الشائعة (FAQ)
-CREATE TABLE FAQ_Knowledge_Base (
+CREATE TABLE faq_knowledge_base (
     FAQ_ID INT AUTO_INCREMENT PRIMARY KEY,
     Subject_ID INT NOT NULL,
     Category VARCHAR(100),
@@ -44,12 +46,12 @@ CREATE TABLE FAQ_Knowledge_Base (
     Is_Approved BOOLEAN DEFAULT FALSE,
     Approved_By INT NULL,
     Last_Updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (Subject_ID) REFERENCES Subjects(Subject_ID) ON DELETE CASCADE,
-    FOREIGN KEY (Approved_By) REFERENCES Users(User_ID) ON DELETE SET NULL
+    FOREIGN KEY (Subject_ID) REFERENCES subjects(Subject_ID) ON DELETE CASCADE,
+    FOREIGN KEY (Approved_By) REFERENCES users(User_ID) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 5. إدخال الطالبات الـ 9 (كامل البيانات)
-INSERT INTO Users (id_number, first_name, last_name, email, Password_Hash, role, Phone_Number) VALUES 
+INSERT INTO users (id_number, first_name, last_name, email, Password_Hash, role, Phone_Number) VALUES 
 ('44202652', 'أريام', 'طارق جشان', 'S44202652@students.tu.edu.sa', 'pass_44202652', 'طالبة', '0551111111'),
 ('44206814', 'جود', 'سعد العوفي', 'S44206814@students.tu.edu.sa', 'pass_44206814', 'طالبة', '0552222222'),
 ('44201827', 'منيرة', 'سعد الغامدي', 'S44201827@students.tu.edu.sa', 'pass_44201827', 'طالبة', '0553333333'),
@@ -61,7 +63,7 @@ INSERT INTO Users (id_number, first_name, last_name, email, Password_Hash, role,
 ('44118635', 'نوران', 'شاكر النمري', 'S44118635@students.tu.edu.sa', 'pass_44118635', 'طالبة', '0559999999');
 
 -- 6. إدخال المشرفات الـ 7 (بنفس تفاصيل الطالبات: إيميل، باسورد، رقم جوال)
-INSERT INTO Users (id_number, first_name, last_name, email, Password_Hash, role, Phone_Number) VALUES 
+INSERT INTO users (id_number, first_name, last_name, email, Password_Hash, role, Phone_Number) VALUES 
 ('1001', 'أريج', 'محجب', 'areej@tu.edu.sa', 'admin_pass_1', 'مشرفة', '0560000001'),
 ('1002', 'مريم', 'خالد', 'a112345@admin.com', 'admin_pass_2', 'مشرفة', '0560000002'),
 ('1003', 'نوال', 'أحمد', 'a234567@admin.com', 'admin_pass_3', 'مشرفة', '0560000003'),
@@ -71,10 +73,10 @@ INSERT INTO Users (id_number, first_name, last_name, email, Password_Hash, role,
 ('1007', 'ود', 'سعد', 'a823498@admin.com', 'admin_pass_7', 'مشرفة', '0560000007');
 
 -- 7. إدخال مادة إدارية
-INSERT INTO Subjects (Subject_Code, Subject_Name, Level) VALUES ('ADM-001', 'الشؤون الأكاديمية', 0);
+INSERT INTO subjects (Subject_Code, Subject_Name, Level) VALUES ('ADM-001', 'الشؤون الأكاديمية', 0);
 
 -- 8. إدخال الأسئلة (التواريخ)
-INSERT INTO FAQ_Knowledge_Base (Subject_ID, Category, Question_Text, Answer_Text, Is_Approved, Approved_By) VALUES 
+INSERT INTO faq_knowledge_base (Subject_ID, Category, Question_Text, Answer_Text, Is_Approved, Approved_By) VALUES 
 (1, 'Holidays', 'متى تبدأ إجازة عيد الفطر؟', 'تبدأ إجازة عيد الفطر المبارك من يوم 09/09/1447 هـ.', TRUE, 10),
 (1, 'Admission', 'ما هو موعد الاعتذار عن الدراسة؟', 'آخر موعد هو 15/08/1447 هـ.', TRUE, 10),
 (1, 'Holidays', 'متى إجازة يوم التأسيس؟', 'في يوم 05/09/1447 هـ.', TRUE, 10),
@@ -89,11 +91,11 @@ SELECT
     role AS 'الدور', 
     Phone_Number AS 'الجوال',
     Password_Hash AS 'كلمة المرور'
-FROM Users;
+FROM users;
 USE DirayaAI_DB;
 
 -- إضافة مواد متنوعة لجدول المواد
-INSERT INTO Subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) VALUES 
+INSERT INTO subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) VALUES 
 ('MAT-101', 'الرياضيات المتقطعة', 'دراسة الهياكل الرياضية المتقطعة والمنطق', 3, 2),
 ('CS-203', 'برمجة الحاسب 2', 'البرمجة الكائنية المتقدمة (OOP) باستخدام C++', 4, 4),
 ('IT-301', 'هندسة البرمجيات', 'مبادئ تصميم وتطوير الأنظمة البرمجية الكبيرة', 3, 5),
@@ -108,13 +110,13 @@ SELECT
     Subject_Name AS 'اسم المادة', 
     Level AS 'المستوى', 
     Credit_Hours AS 'الساعات'
-FROM Subjects 
+FROM subjects 
 ORDER BY Level ASC;
 
 USE DirayaAI_DB;
 
 -- إضافة 6 مواد جديدة إلى الصفوف الموجودة مسبقاً
-INSERT INTO Subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) VALUES 
+INSERT INTO subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) VALUES 
 ('IT-312', 'أمن الشبكات', 'طرق حماية البيانات والاتصالات الشبكية', 3, 6),
 ('CS-441', 'نظم التشغيل', 'دراسة معمارية النظم وإدارة العمليات والذاكرة', 3, 5),
 ('IS-230', 'تحليل وتصميم النظم', 'منهجيات بناء الأنظمة وتحليل المتطلبات', 3, 4),
@@ -128,70 +130,70 @@ SELECT
     Subject_Name AS 'اسم المادة', 
     Level AS 'المستوى', 
     Description AS 'الوصف'
-FROM Subjects 
+FROM subjects 
 ORDER BY Level ASC;
 
 USE DirayaAI_DB;
 
 -- 1. أولاً: نتأكد أن مادة قواعد البيانات موجودة (إذا لم تكن موجودة سيضيفها)
-INSERT IGNORE INTO Subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) 
+INSERT IGNORE INTO subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) 
 VALUES ('DB-303', 'نظم قواعد البيانات', 'تصميم وإدارة قواعد البيانات SQL', 3, 5);
 
-INSERT IGNORE INTO Subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) 
+INSERT IGNORE INTO subjects (Subject_Code, Subject_Name, Description, Credit_Hours, Level) 
 VALUES ('CS-202', 'برمجة الحاسب 1', 'البرمجة بلغة C++', 4, 3);
 
 
 -- 2. حذف وإعادة إنشاء جدول الموارد لضمان النظافة
-DROP TABLE IF EXISTS Academic_Resources;
+DROP TABLE IF EXISTS academic_resources;
 
-CREATE TABLE Academic_Resources (
+CREATE TABLE academic_resources (
     Resource_ID INT AUTO_INCREMENT PRIMARY KEY,
     User_ID INT NOT NULL,
     Subject_ID INT NOT NULL,
     Title VARCHAR(255) NOT NULL,
     Description TEXT,
-    Resource_Type ENUM('PDF', 'Video', 'Link', 'Image') DEFAULT 'PDF',
+    Resource_Type ENUM('PDF', 'PPTX', 'DOCX', 'Video', 'Link', 'Image') DEFAULT 'PDF',
     File_URL VARCHAR(255) NOT NULL,
     Status ENUM('Pending', 'Approved', 'Rejected') DEFAULT 'Pending',
     Upload_Date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_user_res FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE CASCADE,
-    CONSTRAINT fk_sub_res FOREIGN KEY (Subject_ID) REFERENCES Subjects(Subject_ID) ON DELETE CASCADE
+    CONSTRAINT fk_user_res FOREIGN KEY (User_ID) REFERENCES users(User_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_sub_res FOREIGN KEY (Subject_ID) REFERENCES subjects(Subject_ID) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 -- 3. الإدخال باستخدام استعلام يضمن عدم وجود قيم فارغة (NULL)
 -- سنبحث عن الطالبة بإيميلها والمادة بكودها
-INSERT INTO Academic_Resources (User_ID, Subject_ID, Title, Description, Resource_Type, File_URL, Status)
+INSERT INTO academic_resources (User_ID, Subject_ID, Title, Description, Resource_Type, File_URL, Status)
 SELECT 
-    (SELECT User_ID FROM Users WHERE email = 'S44202652@students.tu.edu.sa' LIMIT 1),
-    (SELECT Subject_ID FROM Subjects WHERE Subject_Code = 'DB-303' LIMIT 1),
+    (SELECT User_ID FROM users WHERE email = 'S44202652@students.tu.edu.sa' LIMIT 1),
+    (SELECT Subject_ID FROM subjects WHERE Subject_Code = 'DB-303' LIMIT 1),
     'ملخص استعلامات SQL',
     'شرح مفصل لجمل الربط والبحث',
     'PDF',
     'files/sql_aryam.pdf',
     'Approved'
-WHERE EXISTS (SELECT 1 FROM Users WHERE email = 'S44202652@students.tu.edu.sa') 
-  AND EXISTS (SELECT 1 FROM Subjects WHERE Subject_Code = 'DB-303');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'S44202652@students.tu.edu.sa') 
+  AND EXISTS (SELECT 1 FROM subjects WHERE Subject_Code = 'DB-303');
 
 -- مادة أخرى لجود
-INSERT INTO Academic_Resources (User_ID, Subject_ID, Title, Description, Resource_Type, File_URL, Status)
+INSERT INTO academic_resources (User_ID, Subject_ID, Title, Description, Resource_Type, File_URL, Status)
 SELECT 
-    (SELECT User_ID FROM Users WHERE email = 'S44206814@students.tu.edu.sa' LIMIT 1),
-    (SELECT Subject_ID FROM Subjects WHERE Subject_Code = 'CS-202' LIMIT 1),
+    (SELECT User_ID FROM users WHERE email = 'S44206814@students.tu.edu.sa' LIMIT 1),
+    (SELECT Subject_ID FROM subjects WHERE Subject_Code = 'CS-202' LIMIT 1),
     'أساسيات البرمجة C++',
     'مذكرة شاملة للمفاهيم الأساسية',
     'PDF',
     'files/cpp_joud.pdf',
     'Approved'
-WHERE EXISTS (SELECT 1 FROM Users WHERE email = 'S44206814@students.tu.edu.sa') 
-  AND EXISTS (SELECT 1 FROM Subjects WHERE Subject_Code = 'CS-202');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'S44206814@students.tu.edu.sa') 
+  AND EXISTS (SELECT 1 FROM subjects WHERE Subject_Code = 'CS-202');
 
 -- 4. العرض النهائي
 SELECT r.Title, u.Full_Name, s.Subject_Name 
-FROM Academic_Resources r
-JOIN Users u ON r.User_ID = u.User_ID
-JOIN Subjects s ON r.Subject_ID = s.Subject_ID;
+FROM academic_resources r
+JOIN users u ON r.User_ID = u.User_ID
+JOIN subjects s ON r.Subject_ID = s.Subject_ID;
 
 
 USE DirayaAI_DB;
@@ -200,10 +202,10 @@ USE DirayaAI_DB;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 2. حذف الجدول لإعادة بنائه بالشكل الصحيح
-DROP TABLE IF EXISTS Chatbot_Logs;
+DROP TABLE IF EXISTS chatbot_logs;
 
 -- 3. إنشاء الجدول مع FAQ_ID و Timestamp
-CREATE TABLE Chatbot_Logs (
+CREATE TABLE chatbot_logs (
     Log_ID INT AUTO_INCREMENT PRIMARY KEY,
     User_ID INT NULL,                                 
     FAQ_ID INT NULL,                                  
@@ -212,8 +214,8 @@ CREATE TABLE Chatbot_Logs (
     Confidence_Score DECIMAL(5,2),                    
     Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    -- عمود الـ Timestamp
     
-    CONSTRAINT fk_user_log FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE SET NULL,
-    CONSTRAINT fk_faq_log FOREIGN KEY (FAQ_ID) REFERENCES FAQ_Knowledge_Base(FAQ_ID) ON DELETE SET NULL
+    CONSTRAINT fk_user_log FOREIGN KEY (User_ID) REFERENCES users(User_ID) ON DELETE SET NULL,
+    CONSTRAINT fk_faq_log FOREIGN KEY (FAQ_ID) REFERENCES faq_knowledge_base(FAQ_ID) ON DELETE SET NULL
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. إعادة تفعيل التحقق من المفاتيح الخارجية
@@ -222,11 +224,11 @@ SET FOREIGN_KEY_CHECKS = 1;
 USE DirayaAI_DB;
 
 -- إدخال 4 سجلات محادثات جديدة
-INSERT INTO Chatbot_Logs (User_ID, FAQ_ID, Question_Text, Bot_Response, Confidence_Score)
+INSERT INTO chatbot_logs (User_ID, FAQ_ID, Question_Text, Bot_Response, Confidence_Score)
 VALUES 
 -- محادثة 1: سؤال أكاديمي (موجود في الـ FAQ)
 (
-    (SELECT User_ID FROM Users WHERE email = 'S44201827@students.tu.edu.sa' LIMIT 1), -- الطالبة منيرة
+    (SELECT User_ID FROM users WHERE email = 'S44201827@students.tu.edu.sa' LIMIT 1), -- الطالبة منيرة
     2, -- فرضاً رقم الـ FAQ للسؤال عن الاعتذار
     'ما هو موعد الاعتذار عن الدراسة؟',
     'آخر موعد للاعتذار هو 15/08/1447 هـ.',
@@ -234,7 +236,7 @@ VALUES
 ),
 -- محادثة 2: سؤال أكاديمي (موجود في الـ FAQ)
 (
-    (SELECT User_ID FROM Users WHERE email = 'S44205921@students.tu.edu.sa' LIMIT 1), -- الطالبة أمل
+    (SELECT User_ID FROM users WHERE email = 'S44205921@students.tu.edu.sa' LIMIT 1), -- الطالبة أمل
     3, -- فرضاً رقم الـ FAQ للسؤال عن يوم التأسيس
     'متى إجازة يوم التأسيس؟',
     'يوم التأسيس سيكون في يوم 05/09/1447 هـ.',
@@ -242,7 +244,7 @@ VALUES
 ),
 -- محادثة 3: سؤال عام (غير موجود في الـ FAQ - FAQ_ID يكون NULL)
 (
-    (SELECT User_ID FROM Users WHERE email = 'S44106628@students.tu.edu.sa' LIMIT 1), -- الطالبة شهد
+    (SELECT User_ID FROM users WHERE email = 'S44106628@students.tu.edu.sa' LIMIT 1), -- الطالبة شهد
     NULL, 
     'شكراً لك يا دراية',
     'العفو! أنا هنا دائماً لمساعدتك.',
@@ -250,7 +252,7 @@ VALUES
 ),
 -- محادثة 4: سؤال أكاديمي (موجود في الـ FAQ)
 (
-    (SELECT User_ID FROM Users WHERE email = 'S44200573@students.tu.edu.sa' LIMIT 1), -- الطالبة منار
+    (SELECT User_ID FROM users WHERE email = 'S44200573@students.tu.edu.sa' LIMIT 1), -- الطالبة منار
     4, -- فرضاً رقم الـ FAQ للسؤال عن العودة بعد العيد
     'متى تبدأ الدراسة بعد العيد؟',
     'تستأنف الدراسة في يوم 10/10/1447 هـ.',
@@ -263,8 +265,8 @@ SELECT
     u.Full_Name AS 'اسم الطالبة',
     l.Question_Text AS 'السؤال',
     l.Created_At AS 'وقت العملية (Timestamp)'
-FROM Chatbot_Logs l
-JOIN Users u ON l.User_ID = u.User_ID
+FROM chatbot_logs l
+JOIN users u ON l.User_ID = u.User_ID
 ORDER BY l.Created_At DESC;
 
 USE DirayaAI_DB;
@@ -273,10 +275,10 @@ USE DirayaAI_DB;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 2. حذف الجدول لإعادة إنشائه من جديد
-DROP TABLE IF EXISTS Admin_Actions;
+DROP TABLE IF EXISTS admin_actions;
 
 -- 3. إنشاء الجدول
-CREATE TABLE Admin_Actions (
+CREATE TABLE admin_actions (
     Action_ID INT AUTO_INCREMENT PRIMARY KEY,
     Admin_ID INT NOT NULL,                            
     Action_Type ENUM('Insert', 'Update', 'Delete', 'Approval', 'Login') NOT NULL, 
@@ -284,32 +286,32 @@ CREATE TABLE Admin_Actions (
     Action_Description TEXT NOT NULL,                
     Performed_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    CONSTRAINT fk_admin_user FOREIGN KEY (Admin_ID) REFERENCES Users(User_ID) ON DELETE CASCADE
+    CONSTRAINT fk_admin_user FOREIGN KEY (Admin_ID) REFERENCES users(User_ID) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. إعادة تفعيل القيود
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 5. إدخال بيانات تجريبية (تأكدي أن لديكِ مستخدمين في جدول Users برتبة مشرفة)
+-- 5. إدخال بيانات تجريبية (تأكدي أن لديكِ مستخدمين في جدول users برتبة مشرفة)
 -- هذا الكود سيبحث عن أول مستخدم رتبته 'مشرفة' ويضيف العمليات باسمه تلقائياً
-INSERT INTO Admin_Actions (Admin_ID, Action_Type, Target_Table, Action_Description)
+INSERT INTO admin_actions (Admin_ID, Action_Type, Target_Table, Action_Description)
 SELECT 
     User_ID, 
     'Approval', 
-    'Academic_Resources', 
+    'academic_resources', 
     'تمت الموافقة على ملف ملخص قواعد البيانات'
-FROM Users 
+FROM users 
 WHERE role = 'مشرفة' 
 LIMIT 1;
 
 -- إضافة عملية أخرى لمشرفة ثانية (إن وجدت)
-INSERT INTO Admin_Actions (Admin_ID, Action_Type, Target_Table, Action_Description)
+INSERT INTO admin_actions (Admin_ID, Action_Type, Target_Table, Action_Description)
 SELECT 
     User_ID, 
     'Update', 
-    'FAQ_Knowledge_Base', 
+    'faq_knowledge_base', 
     'تعديل مواعيد الإجازات الرسمية'
-FROM Users 
+FROM users 
 WHERE role = 'مشرفة' 
 ORDER BY User_ID DESC 
 LIMIT 1;
@@ -321,8 +323,8 @@ SELECT
     a.Action_Type AS 'نوع الإجراء',
     a.Action_Description AS 'التفاصيل',
     a.Performed_At AS 'الوقت'
-FROM Admin_Actions a
-JOIN Users u ON a.Admin_ID = u.User_ID;
+FROM admin_actions a
+JOIN users u ON a.Admin_ID = u.User_ID;
 
 USE DirayaAI_DB;
 
@@ -330,10 +332,10 @@ USE DirayaAI_DB;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 2. حذف الجدول لإعادة بنائه
-DROP TABLE IF EXISTS Rating_Comments;
+DROP TABLE IF EXISTS rating_comments;
 
 -- 3. إنشاء جدول التقييمات والتعليقات
-CREATE TABLE Rating_Comments (
+CREATE TABLE rating_comments (
     Rating_ID INT AUTO_INCREMENT PRIMARY KEY,
     User_ID INT NOT NULL,                             
     Resource_ID INT NOT NULL,                         
@@ -341,8 +343,8 @@ CREATE TABLE Rating_Comments (
     Comment_Text TEXT,                                
     Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
     
-    CONSTRAINT fk_rat_user FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE CASCADE,
-    CONSTRAINT fk_rat_res FOREIGN KEY (Resource_ID) REFERENCES Academic_Resources(Resource_ID) ON DELETE CASCADE
+    CONSTRAINT fk_rat_user FOREIGN KEY (User_ID) REFERENCES users(User_ID) ON DELETE CASCADE,
+    CONSTRAINT fk_rat_res FOREIGN KEY (Resource_ID) REFERENCES academic_resources(Resource_ID) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. إعادة تفعيل القيود
@@ -350,24 +352,24 @@ SET FOREIGN_KEY_CHECKS = 1;
 
 -- 5. إدخال بيانات تجريبية بطريقة ذكية (تلقائية)
 -- سيبحث الكود عن أول طالبة وأول مورد أكاديمي موجودين فعلياً في قاعدة بياناتك
-INSERT INTO Rating_Comments (User_ID, Resource_ID, Rating_Value, Comment_Text)
+INSERT INTO rating_comments (User_ID, Resource_ID, Rating_Value, Comment_Text)
 SELECT 
-    (SELECT User_ID FROM Users WHERE role = 'طالبة' LIMIT 1),
-    (SELECT Resource_ID FROM Academic_Resources LIMIT 1),
+    (SELECT User_ID FROM users WHERE role = 'طالبة' LIMIT 1),
+    (SELECT Resource_ID FROM academic_resources LIMIT 1),
     5, 
     'محتوى مفيد جداً وشرح واضح، شكراً جزيلاً!'
-WHERE EXISTS (SELECT 1 FROM Users WHERE role = 'طالبة') 
-  AND EXISTS (SELECT 1 FROM Academic_Resources);
+WHERE EXISTS (SELECT 1 FROM users WHERE role = 'طالبة') 
+  AND EXISTS (SELECT 1 FROM academic_resources);
 
 -- إضافة تقييم ثانٍ
-INSERT INTO Rating_Comments (User_ID, Resource_ID, Rating_Value, Comment_Text)
+INSERT INTO rating_comments (User_ID, Resource_ID, Rating_Value, Comment_Text)
 SELECT 
-    (SELECT User_ID FROM Users WHERE role = 'طالبة' ORDER BY User_ID DESC LIMIT 1),
-    (SELECT Resource_ID FROM Academic_Resources LIMIT 1),
+    (SELECT User_ID FROM users WHERE role = 'طالبة' ORDER BY User_ID DESC LIMIT 1),
+    (SELECT Resource_ID FROM academic_resources LIMIT 1),
     4, 
     'الملخص ممتاز ومنظم، ساعدني في المذاكرة.'
-WHERE EXISTS (SELECT 1 FROM Users WHERE role = 'طالبة') 
-  AND EXISTS (SELECT 1 FROM Academic_Resources);
+WHERE EXISTS (SELECT 1 FROM users WHERE role = 'طالبة') 
+  AND EXISTS (SELECT 1 FROM academic_resources);
 
 -- 6. عرض النتائج النهائية
 SELECT 
@@ -376,9 +378,9 @@ SELECT
     r.Title AS 'اسم المورد',
     rc.Rating_Value AS 'النجوم',
     rc.Comment_Text AS 'التعليق'
-FROM Rating_Comments rc
-JOIN Users u ON rc.User_ID = u.User_ID
-JOIN Academic_Resources r ON rc.Resource_ID = r.Resource_ID;
+FROM rating_comments rc
+JOIN users u ON rc.User_ID = u.User_ID
+JOIN academic_resources r ON rc.Resource_ID = r.Resource_ID;
 
 USE DirayaAI_DB;
 
@@ -386,50 +388,50 @@ USE DirayaAI_DB;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- 2. حذف الجدول القديم لضمان البدء من جديد
-DROP TABLE IF EXISTS Notifications;
+DROP TABLE IF EXISTS notifications;
 
 -- 3. إنشاء الجدول بالمواصفات الصحيحة
-CREATE TABLE Notifications (
+CREATE TABLE notifications (
     Notification_ID INT AUTO_INCREMENT PRIMARY KEY,
     User_ID INT NOT NULL,                             
     Title VARCHAR(150) NOT NULL,                      
     Message TEXT NOT NULL,                            
     Is_Read BOOLEAN DEFAULT FALSE,                    
     Notification_Type ENUM('System', 'Approval', 'Academic', 'Reminder') DEFAULT 'System',
-    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     
-    CONSTRAINT fk_notif_user_id FOREIGN KEY (User_ID) REFERENCES Users(User_ID) ON DELETE CASCADE
+    CONSTRAINT fk_notif_user_id FOREIGN KEY (User_ID) REFERENCES users(User_ID) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- 4. إعادة تفعيل القيود بعد إنشاء الجدول
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 5. إدخال بيانات تجريبية (تستخدم الـ ID الفعلي الموجود في جدول Users)
+-- 5. إدخال بيانات تجريبية (تستخدم الـ ID الفعلي الموجود في جدول users)
 -- سيبحث الكود عن أي مستخدم موجود ليرسل له إشعارات تجريبية
-INSERT INTO Notifications (User_ID, Title, Message, Notification_Type)
+INSERT INTO notifications (User_ID, Title, Message, Notification_Type)
 SELECT 
     User_ID, 
     'مرحباً بك في دراية', 
     'تم تفعيل حسابك بنجاح، يمكنك الآن البدء في تصفح الموارد الأكاديمية.',
     'System'
-FROM Users 
+FROM users 
 LIMIT 1;
 
-INSERT INTO Notifications (User_ID, Title, Message, Notification_Type)
+INSERT INTO notifications (User_ID, Title, Message, Notification_Type)
 SELECT 
     User_ID, 
     'تحديث في جدول المواد', 
     'تمت إضافة مادة جديدة إلى مستواك الدراسي الحالي.',
     'Academic'
-FROM Users 
+FROM users 
 ORDER BY User_ID DESC 
 LIMIT 1;
 
 -- 6. استعلام العرض للتأكد من أن البيانات دخلت بشكل صحيح
 SELECT 
     Notification_ID AS 'رقم الإشعار',
-    (SELECT Full_Name FROM Users WHERE Users.User_ID = Notifications.User_ID) AS 'المستلم',
+    (SELECT Full_Name FROM users WHERE users.User_ID = notifications.User_ID) AS 'المستلم',
     Title AS 'العنوان',
     Message AS 'المحتوى',
     CASE WHEN Is_Read = 0 THEN 'غير مقروء' ELSE 'مقروء' END AS 'الحالة'
-FROM Notifications;
+FROM notifications;
